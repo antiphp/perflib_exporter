@@ -334,7 +334,7 @@ func newPerfLibQueryFunc(query string) collector.QueryFunc {
 	}
 }
 
-// newReductableQueryFunc returns a function that reduces the query functions result according to the given arguments.
+// newReductableQueryFunc returns a function that reduces the query function's result according to the given arguments.
 func newReductableQueryFunc(query collector.QueryFunc, strict *bool, disallowedIDs *[]uint32) collector.QueryFunc {
 	if strict != nil && *strict {
 		return func() ([]*perflib.PerfObject, error) {
