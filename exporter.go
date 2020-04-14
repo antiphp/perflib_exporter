@@ -216,7 +216,7 @@ func main() {
 	*perfObjects = append(*perfObjects, objectNamesToIndices(perfObjectsNamesAdd, objects)...)
 	*perfObjectsRemove = append(*perfObjectsRemove, objectNamesToIndices(perfObjectsNamesRemove, objects)...)
 
-loopPerfObjects:
+	loopPerfObjects:
 	for _, n := range *perfObjects {
 		for _, r := range *perfObjectsRemove {
 			if n == r {
@@ -274,7 +274,7 @@ loopPerfObjects:
 
 // objectNamesToIndices converts a slice of perflib object Name values to a slice of perflib NameIndex values
 func objectNamesToIndices(names *[]string, objectDefinitions []*perflib.PerfObject) (indices []uint32) {
-outerloop:
+	outerloop:
 	for _, p := range *names {
 		for _, o := range objectDefinitions {
 			if p == o.Name {
