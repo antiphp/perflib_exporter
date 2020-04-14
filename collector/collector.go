@@ -33,14 +33,17 @@ func NewCounterKey(object *perflib.PerfObject, def *perflib.PerfCounterDef) Coun
 }
 
 type PerflibCollector struct {
-	perflibQuery string
-	perflibDescs map[CounterKey]*prometheus.Desc
+	perflibQueryFunc QueryFunc
+	perflibDescs     map[CounterKey]*prometheus.Desc
 }
 
-func NewPerflibCollector(query string) (c PerflibCollector) {
-	c.perflibQuery = query
+// QueryFunc describes a function that returns PerfLib objects.
+type QueryFunc = func() ([]*perflib.PerfObject, error)
 
-	objects, err := perflib.QueryPerformanceData(c.perflibQuery)
+func NewPerflibCollector(queryFunc QueryFunc) (c PerflibCollector) {
+	c.perflibQueryFunc = queryFunc
+
+	objects, err := c.perflibQueryFunc()
 
 	if err != nil {
 		panic(err)
@@ -64,7 +67,7 @@ func NewPerflibCollector(query string) (c PerflibCollector) {
 
 func (c PerflibCollector) Collect(ch chan<- prometheus.Metric) (err error) {
 	// TODO QueryPerformanceData timing metric
-	objects, err := perflib.QueryPerformanceData(c.perflibQuery)
+	objects, err := c.perflibQueryFunc()
 
 	if err != nil {
 		// TODO - we shouldn't panic if a single call fails

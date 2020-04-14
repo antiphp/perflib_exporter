@@ -177,6 +177,8 @@ func main() {
 			"perflib.objects.names.add", "List of perflib object names to add to list").Strings()
 		perfObjectsNamesRemove = kingpin.Flag(
 			"perflib.objects.names.remove", "List of perflib object names to remove from list").Strings()
+		perfObjectsRemoveStrict = kingpin.Flag(
+			"perflib.objects.remove.strict", "Determine whether to strictly remove provided object indexes or names from the query result.").Bool()
 	)
 
 	authTokens = kingpin.Flag(
@@ -214,7 +216,7 @@ func main() {
 	*perfObjects = append(*perfObjects, objectNamesToIndices(perfObjectsNamesAdd, objects)...)
 	*perfObjectsRemove = append(*perfObjectsRemove, objectNamesToIndices(perfObjectsNamesRemove, objects)...)
 
-	loopPerfObjects:
+loopPerfObjects:
 	for _, n := range *perfObjects {
 		for _, r := range *perfObjectsRemove {
 			if n == r {
@@ -241,7 +243,11 @@ func main() {
 
 	// Initialize the exporter
 	nodeCollector := PerflibExporter{collectors: map[string]collector.Collector{
-		"perflib": collector.NewPerflibCollector(defaultQuery),
+		"perflib": collector.NewPerflibCollector(newReductableQueryFunc(
+			newPerfLibQueryFunc(defaultQuery),
+			perfObjectsRemoveStrict,
+			perfObjectsRemove,
+		)),
 	}}
 
 	prometheus.MustRegister(nodeCollector)
@@ -268,7 +274,7 @@ func main() {
 
 // objectNamesToIndices converts a slice of perflib object Name values to a slice of perflib NameIndex values
 func objectNamesToIndices(names *[]string, objectDefinitions []*perflib.PerfObject) (indices []uint32) {
-	outerloop:
+outerloop:
 	for _, p := range *names {
 		for _, o := range objectDefinitions {
 			if p == o.Name {
@@ -319,4 +325,50 @@ loop:
 	}
 	changes <- svc.Status{State: svc.StopPending}
 	return
+}
+
+// newPerfLibQueryFunc returns a function querying PerfLib for objects.
+func newPerfLibQueryFunc(query string) collector.QueryFunc {
+	return func() ([]*perflib.PerfObject, error) {
+		return perflib.QueryPerformanceData(query)
+	}
+}
+
+// newReductableQueryFunc returns a function that reduces the query functions result according to the given arguments.
+func newReductableQueryFunc(query collector.QueryFunc, strict *bool, disallowedIDs *[]uint32) collector.QueryFunc {
+	if strict != nil && *strict {
+		return func() ([]*perflib.PerfObject, error) {
+			objects, err := query()
+			if err != nil {
+				return nil, err
+			}
+			return reduceObjects(objects, disallowedIDs), nil
+		}
+	}
+	return query
+}
+
+// reduceObjects reduces the given object list according to the given arguments.
+func reduceObjects(objects []*perflib.PerfObject, disallowedIDs *[]uint32) []*perflib.PerfObject {
+	reduced := make([]*perflib.PerfObject, 0, len(objects))
+	for _, object := range objects {
+		if removeObject(object, disallowedIDs) {
+			continue
+		}
+		reduced = append(reduced, object)
+	}
+	return reduced
+}
+
+// removeObject determines whether the given object should be removed according to the given arguments or not.
+func removeObject(object *perflib.PerfObject, disallowedIDs *[]uint32) bool {
+	if disallowedIDs != nil {
+		nameIndex := uint32(object.NameIndex)
+		for _, id := range *disallowedIDs {
+			if id == nameIndex {
+				return true
+			}
+		}
+	}
+	return false
 }
