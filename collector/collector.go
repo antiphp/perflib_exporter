@@ -38,7 +38,7 @@ type PerflibCollector struct {
 }
 
 // QueryFunc describes a function that returns PerfLib objects.
-type QueryFunc = func() ([]*perflib.PerfObject, error)
+type QueryFunc func() ([]*perflib.PerfObject, error)
 
 func NewPerflibCollector(queryFunc QueryFunc) (c PerflibCollector) {
 	c.perflibQueryFunc = queryFunc
