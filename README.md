@@ -69,6 +69,9 @@ http://127.0.0.1:9432/dump?query=2
           --perflib.objects.remove=PERFLIB.OBJECTS.REMOVE ...
                                     List of perflib object indices to remove from
                                     list
+          --perflib.objects.remove.strict
+                                    Determine whether to strictly remove provided
+                                    object indexes or names from the query result.
           --perflib.objects.names=PERFLIB.OBJECTS.NAMES ...
                                     List of perflib object names to queryBuf
           --perflib.objects.names.add=PERFLIB.OBJECTS.NAMES.ADD ...
