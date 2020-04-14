@@ -76,10 +76,8 @@ func Test_reduceObjects(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := reduceObjects(tt.args.objects, tt.args.disallowedIDs)
-			if got != nil || tt.want != nil {
-				require.Len(t, got, len(tt.want))
-				assert.True(t, reflect.DeepEqual(got, tt.want))
-			}
+			require.Len(t, got, len(tt.want))
+			assert.True(t, reflect.DeepEqual(got, tt.want))
 		})
 	}
 }
