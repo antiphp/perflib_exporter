@@ -156,7 +156,6 @@ func Test_newReductableQueryFunc_Error(t *testing.T) {
 }
 
 func Test_newReductableQueryFunc(t *testing.T) {
-
 	type args struct {
 		queryObjects  []*perflib.PerfObject
 		strict        *bool
